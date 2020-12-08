@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:gfe="http://www.springframework.org/schema/geode"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/geode http://www.springframework.org/schema/geode/spring-geode.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <util:properties id="gemfire-properties">
+
+        <!-- ####################################################################################### -->
+        <!-- Common Properties -->
+        <!-- ####################################################################################### -->
+
+        <!-- Multicast port defaulted to 0 to block multicast discovery -->
+        <prop key="mcast-port">0</prop>
+        <prop key="locators">localhost[10334]</prop>
+        <prop key="name">test-server</prop>
+        <prop key="log-level">INFO</prop>
+        <prop key="log-file">/tmp/vanguard/server.log</prop>
+        <prop key="statistic-sampling-enabled">true</prop>
+        <prop key="conserve-sockets">false</prop>
+        <prop key="socket-buffer-size">65536</prop>
+        <prop key="enable-network-partition-detection">true</prop>
+        <prop key="remove-unresponsive-client">true</prop>
+
+    </util:properties>
+
+
+    <gfe:cache-server port="0" socket-buffer-size="65536"/>
+
+    <gfe:disk-store id="pdxDataStore">
+        <gfe:disk-dir location="/tmp/vanguard/pdx" />
+    </gfe:disk-store>
+
+    <gfe:disk-store id="replicateDataStore">
+        <gfe:disk-dir location="/tmp/vanguard/replicate" />
+    </gfe:disk-store>
+
+    <bean id="pdxSerializer" class="org.apache.geode.pdx.ReflectionBasedAutoSerializer">
+        <constructor-arg value=".*"/>
+    </bean>
+
+    <gfe:replicated-region id="unmaintainedPortfolios"
+                           name="UnmaintainedPortfolios" scope="DISTRIBUTED_ACK" persistent="true"
+                           disk-store-ref="replicateDataStore" />
+
+    <gfe:cache
+            pdx-serializer-ref="pdxSerializer"
+            pdx-persistent="true"
+            pdx-read-serialized="false"
+            pdx-disk-store="pdxDataStore"
+            properties-ref="gemfire-properties"
+            copy-on-read="true"
+            eviction-heap-percentage="70"
+            critical-heap-percentage="80" />
+
+</beans>
